@@ -1,0 +1,7 @@
+LIBRARY ENU
+EXPORTS
+    DummyExport @1
+    LangInit
+    LangGetString
+    LangSetMode
+    ; ……按 dumpbin /exports TEXT\ENU_real.dll 的实际导出表补全
