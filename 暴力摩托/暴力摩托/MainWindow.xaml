@@ -1,0 +1,395 @@
+﻿<Window x:Class="MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Road Rash Launcher" Height="460" Width="680"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+        FontFamily="Impact" Foreground="#FFFFFF">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="PunkYellow" Color="#FFE500"/>
+        <SolidColorBrush x:Key="PunkGreen" Color="#39FF14"/>
+        <SolidColorBrush x:Key="PunkMagenta" Color="#FF2E97"/>
+        <SolidColorBrush x:Key="PunkOrange" Color="#FF6A00"/>
+
+        <!-- 系统按钮 -->
+        <Style x:Key="PunkSysBtn" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource PunkYellow}"/>
+            <Setter Property="Background" Value="#0A0A0A"/>
+            <Setter Property="BorderBrush" Value="{StaticResource PunkYellow}"/>
+            <Setter Property="BorderThickness" Value="3"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="b"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource PunkMagenta}"/>
+                                <Setter TargetName="b" Property="Background" Value="#1A1A1A"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="b" Property="Margin" Value="0,1,0,0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 启动按钮 -->
+        <Style x:Key="PunkButton" TargetType="Button">
+            <Setter Property="Foreground" Value="#0A0A0A"/>
+            <Setter Property="FontFamily" Value="Impact"/>
+            <Setter Property="FontSize" Value="36"/>
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <RotateTransform Angle="-3"/>
+                            </Grid.RenderTransform>
+
+                            <Border CornerRadius="10" Background="{StaticResource PunkMagenta}"
+                                    Margin="7,7,-7,-7" BorderBrush="#0A0A0A" BorderThickness="4"/>
+
+                            <Border x:Name="body" CornerRadius="10" BorderThickness="4"
+                                    BorderBrush="#0A0A0A">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#FFF200" Offset="0"/>
+                                        <GradientStop Color="#FFB300" Offset="0.55"/>
+                                        <GradientStop Color="#FF6A00" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+
+                                <Grid>
+                                    <Border CornerRadius="10" IsHitTestVisible="False" Opacity="0.55">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#00FFFFFF" Offset="0"/>
+                                                <GradientStop Color="#88FFFFFF" Offset="0.45"/>
+                                                <GradientStop Color="#00FFFFFF" Offset="0.55"/>
+                                                <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                    </Border>
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="body" Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#FFF94A" Offset="0"/>
+                                            <GradientStop Color="#FFC61E" Offset="0.55"/>
+                                            <GradientStop Color="#FF7E14" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="body" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform X="3" Y="3"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 语言下拉框 -->
+        <Style x:Key="PunkCombo" TargetType="ComboBox">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Width" Value="280"/>
+            <Setter Property="Foreground" Value="#0A0A0A"/>
+            <Setter Property="FontFamily" Value="Impact"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <RotateTransform Angle="1.5"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border CornerRadius="8" Background="{StaticResource PunkGreen}"
+                                    Margin="6,6,-6,-6" BorderBrush="#0A0A0A" BorderThickness="4"/>
+
+                            <ToggleButton x:Name="ToggleButton"
+                                          Focusable="False"
+                                          ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="root" CornerRadius="8" BorderThickness="4"
+                                                BorderBrush="#0A0A0A" Background="{StaticResource PunkYellow}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="46"/>
+                                                </Grid.ColumnDefinitions>
+                                                <ContentPresenter x:Name="ContentSite"
+                                                                  Grid.Column="0"
+                                                                  Margin="14,0,0,0"
+                                                                  VerticalAlignment="Center"
+                                                                  HorizontalAlignment="Left"
+                                                                  Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                  ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                  ContentStringFormat="{Binding SelectionBoxItemStringFormat, RelativeSource={RelativeSource AncestorType=ComboBox}}"/>
+                                                <Border Grid.Column="1" Background="{StaticResource PunkMagenta}"
+                                                        BorderBrush="#0A0A0A" BorderThickness="4,0,0,0"
+                                                        CornerRadius="0,4,4,0">
+                                                    <Path x:Name="Arrow"
+                                                          Data="M 0 0 L 12 0 L 6 8 Z"
+                                                          Fill="#0A0A0A"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"
+                                                          RenderTransformOrigin="0.5,0.5"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="root" Property="Background" Value="#FFF94A"/>
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="Arrow" Property="RenderTransform">
+                                                    <Setter.Value>
+                                                        <RotateTransform Angle="180"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Border Margin="0,8,0,0"
+                                        CornerRadius="8"
+                                        BorderThickness="4"
+                                        BorderBrush="#0A0A0A"
+                                        Background="#FFF5E6C8"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#FF2E97" BlurRadius="0"
+                                                          ShadowDepth="7" Direction="315" Opacity="1"/>
+                                    </Border.Effect>
+                                    <ScrollViewer Margin="2">
+                                        <StackPanel IsItemsHost="True"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 下拉项 -->
+        <Style x:Key="PunkComboItem" TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="#0A0A0A"/>
+            <Setter Property="FontFamily" Value="Impact"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="itemBorder"
+                                Background="Transparent"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="4"
+                                Margin="4,2">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="itemBorder" Property="Background" Value="{StaticResource PunkYellow}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="itemBorder" Property="Background" Value="{StaticResource PunkGreen}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid>
+            <Border CornerRadius="12" Background="#FF2E97" Margin="10,10,-10,-10"
+                    BorderBrush="#0A0A0A" BorderThickness="5"/>
+
+            <Border x:Name="RootBorder" CornerRadius="12" BorderBrush="#0A0A0A" BorderThickness="5"
+                    Background="#F5E6C8">
+                <Grid>
+                    <Grid.Clip>
+                        <RectangleGeometry Rect="0,0,660,440" RadiusX="10" RadiusY="10"/>
+                    </Grid.Clip>
+
+                    <Canvas IsHitTestVisible="False">
+                        <Canvas.Background>
+                            <RadialGradientBrush Center="0.5,0.55" GradientOrigin="0.5,0.55"
+                                                 RadiusX="0.9" RadiusY="0.9">
+                                <GradientStop Color="#FFF9E27A" Offset="0"/>
+                                <GradientStop Color="#FFE8A33A" Offset="0.55"/>
+                                <GradientStop Color="#FFB4501A" Offset="1"/>
+                            </RadialGradientBrush>
+                        </Canvas.Background>
+
+                        <Canvas x:Name="RaysCanvas" Opacity="0.35"/>
+
+                        <Canvas Opacity="0.18">
+                            <Canvas.Background>
+                                <DrawingBrush TileMode="Tile" Viewport="0,0,18,18" ViewportUnits="Absolute">
+                                    <DrawingBrush.Drawing>
+                                        <GeometryDrawing Brush="#0A0A0A">
+                                            <GeometryDrawing.Geometry>
+                                                <EllipseGeometry Center="9,9" RadiusX="2.2" RadiusY="2.2"/>
+                                            </GeometryDrawing.Geometry>
+                                        </GeometryDrawing>
+                                    </DrawingBrush.Drawing>
+                                </DrawingBrush>
+                            </Canvas.Background>
+                        </Canvas>
+                    </Canvas>
+
+                    <Border x:Name="TitleBar" Height="58" VerticalAlignment="Top"
+                            Background="#0A0A0A" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                            CornerRadius="7,7,0,0">
+                        <Grid>
+                            <Border HorizontalAlignment="Left" VerticalAlignment="Center"
+                                    Margin="16,0,0,0" Background="{StaticResource PunkYellow}"
+                                    BorderBrush="#0A0A0A" BorderThickness="4" CornerRadius="6"
+                                    Padding="14,2" RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <RotateTransform Angle="-6"/>
+                                </Border.RenderTransform>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="ROAD" FontSize="30" Foreground="{StaticResource PunkOrange}"
+                                               FontStyle="Italic" FontWeight="Bold"/>
+                                    <TextBlock Text="RASH" FontSize="30" Foreground="#0A0A0A"
+                                               FontStyle="Italic" FontWeight="Bold" Margin="6,0,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                        VerticalAlignment="Center" Margin="0,0,14,0">
+                                <Button x:Name="MinBtn" Content="−" Width="40" Height="30"
+                                        Style="{StaticResource PunkSysBtn}"
+                                        FontSize="22" Padding="0,0,0,4"
+                                        Click="MinBtn_Click"/>
+                                <Button x:Name="CloseBtn" Content="X" Width="40" Height="30"
+                                        Style="{StaticResource PunkSysBtn}"
+                                        FontSize="20" Margin="8,0,0,0"
+                                        Click="CloseBtn_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Grid Margin="0,58,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" VerticalAlignment="Top" HorizontalAlignment="Center"
+                                    Margin="0,16,0,0" RenderTransformOrigin="0.5,0.5">
+                            <StackPanel.RenderTransform>
+                                <RotateTransform Angle="-1.5"/>
+                            </StackPanel.RenderTransform>
+                            <Border Background="#0A0A0A" CornerRadius="4" Padding="14,4"
+                                    HorizontalAlignment="Center">
+                                <TextBlock Text="NO RULES · JUST RIDE · 撕 裂 公 路"
+                                           Foreground="{StaticResource PunkYellow}"
+                                           FontFamily="Consolas" FontSize="15" FontWeight="Bold"
+                                           FontStyle="Italic"/>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Margin="0,0,0,10">
+                            <TextBlock Text="LANGUAGE" Foreground="#0A0A0A" FontSize="18"
+                                       FontStyle="Italic" FontWeight="Bold" HorizontalAlignment="Left"
+                                       Margin="6,0,0,6" RenderTransformOrigin="0.5,0.5">
+                                <TextBlock.RenderTransform>
+                                    <RotateTransform Angle="-2"/>
+                                </TextBlock.RenderTransform>
+                            </TextBlock>
+
+                            <ComboBox x:Name="LangCombo"
+                                      Style="{StaticResource PunkCombo}"
+                                      ItemContainerStyle="{StaticResource PunkComboItem}">
+                                <ComboBoxItem Content="简体中文" Tag="CHS" IsSelected="True"/>
+                                <ComboBoxItem Content="English" Tag="ENU"/>
+                                <ComboBoxItem Content="Deutsch" Tag="DEU"/>
+                                <ComboBoxItem Content="Español" Tag="ESP"/>
+                                <ComboBoxItem Content="Français" Tag="FRA"/>
+                                <ComboBoxItem Content="Italiano" Tag="ITA"/>
+                            </ComboBox>
+
+                            <Button x:Name="LaunchBtn" Content="GO GO GO!"
+                                    Width="360" Height="96" Margin="0,24,0,0"
+                                    Style="{StaticResource PunkButton}"
+                                    Click="Launch_Click"/>
+                        </StackPanel>
+
+                        <Border Grid.Row="2" Background="#0A0A0A" Height="34"
+                                CornerRadius="0,0,7,7">
+                            <Grid Margin="14,0">
+                                <TextBlock x:Name="StatusText" Text="就绪 · READY"
+                                           Foreground="{StaticResource PunkGreen}"
+                                           FontFamily="Consolas" FontSize="13" FontWeight="Bold"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="ROAD RASH LAUNCHER v1.0"
+                                           Foreground="{StaticResource PunkMagenta}"
+                                           FontFamily="Consolas" FontSize="12" FontWeight="Bold"
+                                           Opacity="0.7"
+                                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
