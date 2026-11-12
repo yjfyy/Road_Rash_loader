@@ -339,7 +339,7 @@
                             </StackPanel.RenderTransform>
                             <Border Background="#0A0A0A" CornerRadius="4" Padding="14,4"
                                     HorizontalAlignment="Center">
-                                <TextBlock Text="NO RULES · JUST RIDE · 撕 裂 公 路"
+                                <TextBlock Text="NO RULES · JUST RIDE · RACE AND GO"
                                            Foreground="{StaticResource PunkYellow}"
                                            FontFamily="Consolas" FontSize="15" FontWeight="Bold"
                                            FontStyle="Italic"/>
@@ -367,10 +367,10 @@
                                 <ComboBoxItem Content="Italiano" Tag="ITA"/>
                             </ComboBox>
 
-                            <Button x:Name="LaunchBtn" Content="GO GO GO!"
+                            <Button x:Name="LaunchBtn" Content="开始狂彪！！！"
                                     Width="360" Height="96" Margin="0,24,0,0"
                                     Style="{StaticResource PunkButton}"
-                                    Click="Launch_Click"/>
+                                    Click="Launch_Click" FontWeight="Bold"/>
                         </StackPanel>
 
                         <Border Grid.Row="2" Background="#0A0A0A" Height="34"
@@ -380,11 +380,27 @@
                                            Foreground="{StaticResource PunkGreen}"
                                            FontFamily="Consolas" FontSize="13" FontWeight="Bold"
                                            VerticalAlignment="Center"/>
-                                <TextBlock Text="ROAD RASH LAUNCHER v1.0"
-                                           Foreground="{StaticResource PunkMagenta}"
-                                           FontFamily="Consolas" FontSize="12" FontWeight="Bold"
-                                           Opacity="0.7"
-                                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <TextBlock Text="暴力摩托启动器 v1.0"
+               Foreground="{StaticResource PunkMagenta}"
+               FontFamily="Consolas" FontSize="12" FontWeight="Bold"
+               Opacity="0.7"
+               VerticalAlignment="Center"/>
+                                    <TextBlock Text="  ·  " Foreground="{StaticResource PunkGreen}"
+               FontFamily="Consolas" FontSize="12"
+               VerticalAlignment="Center"/>
+                                    <TextBlock FontFamily="Consolas" FontSize="12" FontWeight="Bold"
+               VerticalAlignment="Center">
+        <Hyperlink NavigateUri="http://fengtu.org"
+                   Foreground="{StaticResource PunkYellow}"
+                   TextDecorations="None"
+                   MouseEnter="Hyperlink_MouseEnter"
+                   MouseLeave="Hyperlink_MouseLeave"
+                   RequestNavigate="Hyperlink_RequestNavigate">
+            fengtu.org
+        </Hyperlink>
+                                    </TextBlock>
+                                </StackPanel>
                             </Grid>
                         </Border>
                     </Grid>

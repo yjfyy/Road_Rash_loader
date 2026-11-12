@@ -2,80 +2,9 @@
 Imports System.Reflection
 Imports Microsoft.Win32
 Imports System.Security.Principal
-Imports System.Runtime.InteropServices
 
 Partial Public Class MainWindow
     Inherits Window
-    ' ========== DLL 注入 P/Invoke ==========
-    <DllImport("kernel32.dll", SetLastError:=True)>
-    Private Shared Function OpenProcess(dwDesiredAccess As Integer, bInheritHandle As Boolean, dwProcessId As Integer) As IntPtr
-    End Function
-
-    <DllImport("kernel32.dll", SetLastError:=True)>
-    Private Shared Function VirtualAllocEx(hProcess As IntPtr, lpAddress As IntPtr, dwSize As UIntPtr, flAllocationType As Integer, flProtect As Integer) As IntPtr
-    End Function
-
-    <DllImport("kernel32.dll", SetLastError:=True)>
-    Private Shared Function WriteProcessMemory(hProcess As IntPtr, lpBaseAddress As IntPtr, lpBuffer As Byte(), nSize As UIntPtr, ByRef lpNumberOfBytesWritten As UIntPtr) As Boolean
-    End Function
-
-    <DllImport("kernel32.dll", SetLastError:=True, CharSet:=CharSet.Ansi)>
-    Private Shared Function GetModuleHandle(lpModuleName As String) As IntPtr
-    End Function
-
-    <DllImport("kernel32.dll", SetLastError:=True, CharSet:=CharSet.Ansi)>
-    Private Shared Function GetProcAddress(hModule As IntPtr, lpProcName As String) As IntPtr
-    End Function
-
-    <DllImport("kernel32.dll", SetLastError:=True)>
-    Private Shared Function CreateRemoteThread(hProcess As IntPtr, lpThreadAttributes As IntPtr, dwStackSize As UIntPtr, lpStartAddress As IntPtr, lpParameter As IntPtr, dwCreationFlags As Integer, ByRef lpThreadId As IntPtr) As IntPtr
-    End Function
-
-    <DllImport("kernel32.dll", SetLastError:=True)>
-    Private Shared Function WaitForSingleObject(hHandle As IntPtr, dwMilliseconds As Integer) As Integer
-    End Function
-
-    <DllImport("kernel32.dll", SetLastError:=True)>
-    Private Shared Function CloseHandle(hObject As IntPtr) As Boolean
-    End Function
-
-    Private Const PROCESS_ALL_ACCESS As Integer = &H1F0FFF
-    Private Const MEM_COMMIT As Integer = &H1000
-    Private Const PAGE_READWRITE As Integer = &H4
-
-    ''' <summary>把 Hook DLL 注入到目标进程</summary>
-    Private Function InjectHookDll(pid As Integer, dllPath As String) As Boolean
-        Dim hProcess = OpenProcess(PROCESS_ALL_ACCESS, False, pid)
-        If hProcess = IntPtr.Zero Then Return False
-
-        Try
-            Dim pathBytes = System.Text.Encoding.Unicode.GetBytes(dllPath & vbNullChar)
-            Dim pRemoteMem = VirtualAllocEx(hProcess, IntPtr.Zero,
-            New UIntPtr(CULng(pathBytes.Length)), MEM_COMMIT, PAGE_READWRITE)
-            If pRemoteMem = IntPtr.Zero Then Return False
-
-            Dim written As UIntPtr
-            If Not WriteProcessMemory(hProcess, pRemoteMem, pathBytes,
-            New UIntPtr(CULng(pathBytes.Length)), written) Then Return False
-
-            Dim hKernel32 = GetModuleHandle("kernel32.dll")
-            Dim pLoadLibrary = GetProcAddress(hKernel32, "LoadLibraryW")
-
-            Dim threadId As IntPtr
-            Dim hThread = CreateRemoteThread(hProcess, IntPtr.Zero, UIntPtr.Zero,
-            pLoadLibrary, pRemoteMem, 0, threadId)
-            If hThread = IntPtr.Zero Then Return False
-
-            WaitForSingleObject(hThread, 5000)
-            CloseHandle(hThread)
-            Return True
-        Finally
-            CloseHandle(hProcess)
-        End Try
-    End Function
-    ' =======================================
-
-
 
     ' ========== 配置区 ==========
     Private Const GameExeName As String = "RoadRash95.exe"
@@ -117,7 +46,7 @@ Partial Public Class MainWindow
 
         ' 启动即恢复英文，作为所有守护失效后的兜底
         Try
-            ResourceHelper.RestoreEnglishDll(GameDirectory)
+            ResourceHelper.WriteLanguageDll(GameDirectory, "暴力摩托.ENU.DLL")
         Catch
         End Try
     End Sub
@@ -172,7 +101,7 @@ Partial Public Class MainWindow
         Try
             Dim pid = If(_gameProcess IsNot Nothing, _gameProcess.Id, 0)
             ResourceHelper.KillGameProcess(Path.GetFileNameWithoutExtension(GameExeName), pid)
-            ResourceHelper.RestoreEnglishDll(GameDirectory)
+            ResourceHelper.WriteLanguageDll(GameDirectory, "暴力摩托.ENU.DLL")
         Catch
         End Try
     End Sub
@@ -192,7 +121,19 @@ Partial Public Class MainWindow
             _watchRestartCount = 0
 
             Await Task.Run(Sub() FullSetupAndLaunch(lang))
-            UpdateStatus("完成 · LET'S RIDE!")
+            UpdateStatus("游戏运行中 · LET'S RIDE!")
+
+            ' 等游戏进程退出后再恢复按钮
+            If _gameProcess IsNot Nothing Then
+                Await Task.Run(Sub()
+                                   Try
+                                       _gameProcess.WaitForExit()
+                                   Catch
+                                   End Try
+                               End Sub)
+            End If
+
+            UpdateStatus("游戏已退出 · READY")
         Catch ex As Exception
             UpdateStatus("错误：" & ex.Message)
             MessageBox.Show(ex.ToString(), "启动失败", MessageBoxButton.OK, MessageBoxImage.Error)
@@ -210,139 +151,54 @@ Partial Public Class MainWindow
     Private Sub FullSetupAndLaunch(lang As String)
         Dim gameDir = GameDirectory
 
+        ' 中文/英文：写 TEXT\ENU.DLL；其他语言：不写
+        If LangDllMap.ContainsKey(lang) Then
+            'UpdateStatus("释放语言资源 · LANGUAGE DLL…")
+            ExtractLanguageResource(lang, gameDir)
+        End If
+
+        'UpdateStatus("设置游戏语言 · LANGUAGE…")
+        ApplyGameLanguage(lang)
+
         UpdateStatus("启动游戏 · LAUNCHING…")
         Dim exePath = Path.Combine(gameDir, GameExeName)
         If Not File.Exists(exePath) Then
-            Throw New FileNotFoundException("未找到游戏可执行文件：" & exePath)
+            Throw New FileNotFoundException("未找到游戏可执行文件")
         End If
 
         Try
             _gameProcess?.Dispose()
         Catch
         End Try
+        _gameProcess = Process.Start(New ProcessStartInfo(exePath, GameArgs) With {
+        .WorkingDirectory = gameDir,
+        .UseShellExecute = True
+    })
 
-        ' 选中文设置环境变量，代理 ENU.dll 会读它决定加载 CHS.dll
-        If lang = "CHS" Then
-            Environment.SetEnvironmentVariable("ROADRASH_LANG", "CHS", EnvironmentVariableTarget.Process)
-        Else
-            Environment.SetEnvironmentVariable("ROADRASH_LANG", Nothing, EnvironmentVariableTarget.Process)
+        If _watchProcess Is Nothing OrElse _watchProcess.HasExited Then
+            StartWatchProcess()
         End If
 
-        ' UseShellExecute=False 确保环境变量随子进程继承
-        _gameProcess = Process.Start(New ProcessStartInfo(exePath, GameArgs) With {
-    .WorkingDirectory = gameDir,
-    .UseShellExecute = False
-})
-
-
-
-        'Dim gameDir = GameDirectory
-        'If lang = "CHS" Then
-        '    Dim hookDll = Path.Combine(gameDir, "LangHook.dll")
-        '    If File.Exists(hookDll) Then
-        '        Threading.Thread.Sleep(1500)  ' 等游戏初始化，避免太早注入失败
-        '        InjectHookDll(_gameProcess.Id, hookDll)
-        '    End If
-        'End If
-
-        'UpdateStatus("释放资源 · EXTRACTING…")
-        'ExtractBaseResources(gameDir)
-
-        'If LangDllMap.ContainsKey(lang) Then
-        '    UpdateStatus("释放语言资源 · LANGUAGE DLL…")
-        '    ExtractLanguageResource(lang, gameDir)
-        'End If
-
-        'UpdateStatus("写入记录 · REGISTRY…")
-        'WriteLauncherRegistry(gameDir, lang)
-
-        'UpdateStatus("设置游戏语言 · LANGUAGE…")
-        'ApplyGameLanguage(lang)
-
-        'UpdateStatus("启动游戏 · LAUNCHING…")
-        'Dim exePath = Path.Combine(gameDir, GameExeName)
-        'If Not File.Exists(exePath) Then
-        '    Throw New FileNotFoundException("未找到游戏可执行文件：" & exePath)
-        'End If
-
-        '' 释放旧的进程对象
-        'Try
-        '    _gameProcess?.Dispose()
-        'Catch
-        'End Try
-        '_gameProcess = Process.Start(New ProcessStartInfo(exePath, GameArgs) With {
-        '    .WorkingDirectory = gameDir,
-        '    .UseShellExecute = True
-        '})
-
-        '' 每次启动游戏都确保 --watch 存活
-        'If _watchProcess Is Nothing OrElse _watchProcess.HasExited Then
-        '    StartWatchProcess()
-        'End If
-
-        '' 看门狗只启动一次
-        'If Not _watchdogStarted Then
-        '    _watchdogStarted = True
-        '    WatchWatchdog()
-        'End If
-    End Sub
-
-    ' ---------- 资源释放 ----------
-    Private Sub ExtractBaseResources(targetDir As String)
-        Dim asm = Assembly.GetExecutingAssembly()
-        Dim prefix = asm.GetName().Name & "."
-
-        For Each resName In asm.GetManifestResourceNames()
-            If Not resName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) Then Continue For
-
-            Dim lower = resName.ToLowerInvariant()
-            If lower.EndsWith(".chs.dll") OrElse lower.EndsWith(".enu.dll") Then Continue For
-
-            Dim relative = resName.Substring(prefix.Length)
-            Dim lastDot = relative.LastIndexOf("."c)
-            If lastDot <= 0 Then Continue For
-
-            Dim fileName = relative.Substring(0, lastDot).Replace("."c, Path.DirectorySeparatorChar) &
-                           relative.Substring(lastDot)
-
-            Dim destPath = Path.Combine(targetDir, fileName)
-            If File.Exists(destPath) Then Continue For
-
-            Dim destFolder = Path.GetDirectoryName(destPath)
-            If Not Directory.Exists(destFolder) Then Directory.CreateDirectory(destFolder)
-
-            Using input = asm.GetManifestResourceStream(resName)
-                Using output = File.Create(destPath)
-                    input.CopyTo(output)
-                End Using
-            End Using
-        Next
+        If Not _watchdogStarted Then
+            _watchdogStarted = True
+            WatchWatchdog()
+        End If
     End Sub
 
     Private Sub ExtractLanguageResource(langCode As String, gameDir As String)
-        Dim asm = Assembly.GetExecutingAssembly()
         Dim resName = LangDllMap(langCode)
-        Dim stream As Stream = asm.GetManifestResourceStream(resName)
+        Dim asm = Assembly.GetExecutingAssembly()
 
-        If stream Is Nothing Then
-            Dim fileName = Path.GetFileName(resName)
-            resName = asm.GetManifestResourceNames().
-                FirstOrDefault(Function(n) n.EndsWith("." & fileName, StringComparison.OrdinalIgnoreCase))
-            If resName IsNot Nothing Then
-                stream = asm.GetManifestResourceStream(resName)
-            End If
-        End If
-
-        If stream Is Nothing Then
-            Throw New FileNotFoundException(
-                "未找到嵌入资源：" & LangDllMap(langCode) &
+        Using stream = asm.GetManifestResourceStream(resName)
+            If stream Is Nothing Then
+                Throw New FileNotFoundException(
+                "未找到嵌入资源：" & resName &
                 "。当前资源：" & String.Join(", ", asm.GetManifestResourceNames()))
-        End If
+            End If
 
-        Dim textDir = Path.Combine(gameDir, "TEXT")
-        If Not Directory.Exists(textDir) Then Directory.CreateDirectory(textDir)
+            Dim textDir = Path.Combine(gameDir, "TEXT")
+            If Not Directory.Exists(textDir) Then Directory.CreateDirectory(textDir)
 
-        Using stream
             Using output = File.Create(Path.Combine(textDir, "ENU.DLL"))
                 stream.CopyTo(output)
             End Using
@@ -370,6 +226,20 @@ Partial Public Class MainWindow
                 End If
             End Using
         End Using
+
+        ' ---- 写 HKCU 下的玩家名称 ----
+        Try
+            Using userKey = Registry.CurrentUser.CreateSubKey("Software\Electronic Arts\RoadRash 95")
+                If userKey IsNot Nothing Then
+                    Dim nameVal = TryCast(userKey.GetValue("Name", Nothing), String)
+                    If String.IsNullOrWhiteSpace(nameVal) Then
+                        userKey.SetValue("Name", "疯兔游戏fengtu.org", RegistryValueKind.String)
+                    End If
+                End If
+            End Using
+        Catch
+            ' 写 HKCU 失败不影响启动流程
+        End Try
     End Sub
 
     Private Sub WriteLauncherRegistry(gameDir As String, lang As String)
@@ -402,7 +272,7 @@ Partial Public Class MainWindow
     Private Sub WatchWatchdog()
         Task.Run(Sub()
                      While Not _exiting
-                         System.Threading.Thread.Sleep(2000)
+                         System.Threading.Thread.Sleep(500)
                          If _exiting Then Exit While
 
                          Dim needRestart As Boolean = False
@@ -448,6 +318,28 @@ Partial Public Class MainWindow
             StatusText.Text = msg
         Else
             Dispatcher.Invoke(Sub() StatusText.Text = msg)
+        End If
+    End Sub
+    Private Sub Hyperlink_RequestNavigate(sender As Object, e As System.Windows.Navigation.RequestNavigateEventArgs)
+        Try
+            Process.Start(New ProcessStartInfo(e.Uri.AbsoluteUri) With {
+                .UseShellExecute = True
+            })
+        Catch
+        End Try
+        e.Handled = True
+    End Sub
+
+    Private Sub Hyperlink_MouseEnter(sender As Object, e As MouseEventArgs)
+        If TypeOf sender Is System.Windows.Documents.Hyperlink Then
+            DirectCast(sender, System.Windows.Documents.Hyperlink).TextDecorations =
+                System.Windows.TextDecorations.Underline
+        End If
+    End Sub
+
+    Private Sub Hyperlink_MouseLeave(sender As Object, e As MouseEventArgs)
+        If TypeOf sender Is System.Windows.Documents.Hyperlink Then
+            DirectCast(sender, System.Windows.Documents.Hyperlink).TextDecorations = Nothing
         End If
     End Sub
 End Class

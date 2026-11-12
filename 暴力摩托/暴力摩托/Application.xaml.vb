@@ -45,7 +45,7 @@ Partial Public Class Application
         End If
 
         If parent Is Nothing Then
-            ResourceHelper.RestoreEnglishDll(gameDir)
+            ResourceHelper.WriteLanguageDll(gameDir, "暴力摩托.ENU.DLL")
             Return
         End If
 
@@ -57,10 +57,10 @@ Partial Public Class Application
             Catch
                 Exit While
             End Try
-            Thread.Sleep(1000)
+            Thread.Sleep(200)
         End While
 
         ResourceHelper.KillGameProcess(procName)
-        ResourceHelper.RestoreEnglishDll(gameDir)
+        ResourceHelper.WriteLanguageDll(gameDir, "暴力摩托.ENU.DLL")
     End Sub
 End Class

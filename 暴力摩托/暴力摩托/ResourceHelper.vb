@@ -1,39 +1,38 @@
 ﻿Imports System.IO
 Imports System.Reflection
-Imports System.Threading
+Imports System.Security.Cryptography
 
 Public Module ResourceHelper
     ''' <summary>把嵌入的英文 ENU.DLL 释放到游戏目录 TEXT 下（幂等）</summary>
     ''' <returns>成功返回 True，失败返回 False</returns>
-    Public Function RestoreEnglishDll(gameDir As String) As Boolean
+    Public Function WriteLanguageDll(gameDir As String, resName As String) As Boolean
         Try
             Dim asm = Assembly.GetExecutingAssembly()
-            Dim resName = "暴力摩托.ENU.DLL"
-            Dim stream = asm.GetManifestResourceStream(resName)
+            Using stream = asm.GetManifestResourceStream(resName)
+                If stream Is Nothing Then Return False
 
-            If stream Is Nothing Then
-                Dim fileName = "ENU.DLL"
-                resName = asm.GetManifestResourceNames().
-                FirstOrDefault(Function(n) n.EndsWith("." & fileName, StringComparison.OrdinalIgnoreCase))
-                If resName IsNot Nothing Then
-                    stream = asm.GetManifestResourceStream(resName)
-                End If
-            End If
+                Dim textDir = Path.Combine(gameDir, "TEXT")
+                If Not Directory.Exists(textDir) Then Return False
 
-            If stream Is Nothing Then Return False
-
-            Dim textDir = Path.Combine(gameDir, "TEXT")
-            If Not Directory.Exists(textDir) Then Directory.CreateDirectory(textDir)
-
-            Dim dest = Path.Combine(textDir, "ENU.DLL")
-
-            Using stream
+                Dim dest = Path.Combine(textDir, "ENU.DLL")
                 Using output = File.Create(dest)
                     stream.CopyTo(output)
                 End Using
-            End Using
 
-            Return True
+                ' 把 ENU.DLL 的时间戳改成和 ESP.DLL 一致
+                Try
+                    Dim refFile = Path.Combine(textDir, "ESP.DLL")
+                    If File.Exists(refFile) Then
+                        File.SetCreationTimeUtc(dest, File.GetCreationTimeUtc(refFile))
+                        File.SetLastWriteTimeUtc(dest, File.GetLastWriteTimeUtc(refFile))
+                        File.SetLastAccessTimeUtc(dest, File.GetLastAccessTimeUtc(refFile))
+                    End If
+                Catch
+                    ' 时间戳设置失败不影响主流程
+                End Try
+
+                Return True
+            End Using
         Catch
             Return False
         End Try

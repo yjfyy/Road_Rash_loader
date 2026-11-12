@@ -72,6 +72,9 @@
     <PlatformTarget>x86</PlatformTarget>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>暴力摩托.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -160,7 +163,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\CHS.DLL" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="暴力摩托.ico" />
+  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\ENU.DLL" />
   </ItemGroup>
